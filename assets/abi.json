@@ -1,0 +1,59 @@
+[
+	{
+		"inputs": [
+			{
+				"internalType": "int256",
+				"name": "money",
+				"type": "int256"
+			}
+		],
+		"name": "depositBalance",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "int256",
+				"name": "_balance",
+				"type": "int256"
+			}
+		],
+		"name": "setBalance",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "int256",
+				"name": "money",
+				"type": "int256"
+			}
+		],
+		"name": "withdrawBalance",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getBalance",
+		"outputs": [
+			{
+				"internalType": "int256",
+				"name": "",
+				"type": "int256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+]
