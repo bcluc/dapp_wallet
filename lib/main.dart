@@ -46,12 +46,15 @@ class _MyHomePageState extends State<MyHomePage> {
   double myAmount = 0;
   final String privateKey =
       "82ba7c0cc41ad81a8e119e4669e4b17f19b82af518bc156acc40794af3bfc947";
+  // contract in remix
+  final String contractAddress = "0x0f79Dd52c64285D9A715DDE5B4E2EfF559683dA9";
   final String _rpcUrl =
       Platform.isAndroid ? 'http://10.0.2.2:7545' : 'http://127.0.0.1:7545';
   final String _wsUrl =
       Platform.isAndroid ? 'http://10.0.2.2:7545' : 'ws://127.0.0.1:7545';
 
   var myData;
+
   //your wallet url
   final myAddress = "0xE10880aA7522df57f6e1B3cA8791Ae6ed26042f9";
 
@@ -69,7 +72,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<DeployedContract> loadContract() async {
     String abi = await rootBundle.loadString("assets/abi.json");
-    String contractAddress = "0x9CB2f3BA5B43154484e96B093826Aeb35a7929C8";
 
     final contract = DeployedContract(ContractAbi.fromJson(abi, "PKCoin"),
         EthereumAddress.fromHex(contractAddress));
@@ -86,7 +88,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> getBalance(String targetAddress) async {
-    EthereumAddress address = EthereumAddress.fromHex(targetAddress);
+    // EthereumAddress address = EthereumAddress.fromHex(targetAddress);
     List<dynamic> result = await query("getBalance", []);
     myData = result[0];
     data = true;
@@ -101,8 +103,10 @@ class _MyHomePageState extends State<MyHomePage> {
     final result = await ethClient.sendTransaction(
         credentials,
         Transaction.callContract(
-            contract: contract, function: ethFunction, parameters: args), fetchChainIdFromNetworkId: true);
-
+            contract: contract, function: ethFunction, parameters: args),
+        chainId: null,
+        fetchChainIdFromNetworkId: true);
+    restartMoney();
     return result;
   }
 
@@ -120,7 +124,12 @@ class _MyHomePageState extends State<MyHomePage> {
     return response;
   }
 
-  void getMyAmount() {}
+  void restartMoney() {
+    getBalance(myAddress);
+    setState(() {
+      myAmount = 0;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -161,7 +170,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 label: myAmount.round().toString(),
                 onChanged: (double value) {
                   setState(() {
-                    myAmount = value;
+                    myAmount = value.round().toDouble();
                   });
                 }),
             Center(
@@ -172,23 +181,29 @@ class _MyHomePageState extends State<MyHomePage> {
                   mainAxisSize: MainAxisSize.max,
                   children: [
                     SizedBox(
-                      width: 150,
+                      width: 70,
+                      child: TextButton(
+                          onPressed: restartMoney,
+                          child: const Text(
+                            "Reset",
+                            textAlign: TextAlign.center,
+                          )),
+                    ),
+                    SizedBox(
+                      width: 70,
+                      child: TextButton(
+                          onPressed: withdrawMoney,
+                          child: const Text("Withdraw your account",
+                              textAlign: TextAlign.center)),
+                    ),
+                    SizedBox(
+                      width: 70,
                       child: TextButton(
                           onPressed: depositMoney,
                           child: const Text(
                             "Deposit your account",
                             textAlign: TextAlign.center,
                           )),
-                    ),
-                    SizedBox(
-                      width: 150,
-                      child: TextButton(
-                          onPressed: withdrawMoney,
-                          child: const Text("Withdraw your account",
-                              textAlign: TextAlign.center)),
-                    ),
-                    const SizedBox(
-                      width: 20,
                     ),
                   ],
                 ),
