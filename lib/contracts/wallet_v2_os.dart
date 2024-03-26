@@ -1,13 +1,16 @@
 import 'dart:io';
+import 'dart:convert';
 import 'dart:math';
+import 'package:dapp_tutorial/utils/notification.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart';
+import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
 
-class WalletOS extends StatelessWidget {
-  const WalletOS({super.key});
+class WalletOSV2 extends StatelessWidget {
+  const WalletOSV2({super.key});
 
   // This widget is the root of your application.
   @override
@@ -50,34 +53,26 @@ class _WalletPageState extends State<WalletPage> {
   bool transactionConfirmed = false;
 
   // Wallet private key
-  final String localPrivateKey =
-      "82ba7c0cc41ad81a8e119e4669e4b17f19b82af518bc156acc40794af3bfc947";
   final String sepPrivateKey =
       "4177462845449c2549df12b12c2c933959ad52b4cb36305974a8cfa7170fcd35";
   // contract in remix
-  final String localContractAddress =
-      "0x14567ECdF9e82170c71C78D249904A29C23F0282";
   final String sepContractAddress =
-      "0x1fA8630d9aA5F3aAC32869761Fb989f0c754a2c1";
+      "0xa229d8Ce648cCE125158D8075C993bbb21a352b6";
 
   // my IP_V4: 10.0.21.165
-  final String _rpcUrl =
-      Platform.isAndroid ? 'http://10.0.2.2:7545' : 'http://127.0.0.1:7545';
-  final String _wsUrl =
-      Platform.isAndroid ? 'http://10.0.2.2:7545' : 'ws://127.0.0.1:7545';
   final String _sepRpcUrl =
       'https://sepolia.infura.io/v3/2682fb5ba7214f63ad1b4b90c9169b38';
 
   late BigInt myData;
   late String error;
   var lbData;
+  late DeployedContract contract;
+  late ContractEvent contractEvent;
 
   //your wallet url
-  final myLocalAddress = "0xE10880aA7522df57f6e1B3cA8791Ae6ed26042f9";
   final mySepAddress = "0x55128a9000E226c90Da21cb864d985Ad3ef7E9C5";
 
   // the account you send to
-  final toLocalAddress = "0xf6E195E74FE05Da67623A51Af5597D0fF6Bb1DBe";
   final toSepAddress = "0x87adf62727625c29D6A2F478df145c975896498f";
 
   @override
@@ -88,6 +83,7 @@ class _WalletPageState extends State<WalletPage> {
     // ethClient = Web3Client(_rpcUrl, httpClient, socketConnector: () {
     //   return IOWebSocketChannel.connect(_wsUrl).cast<String>();
     ethClient = Web3Client(_sepRpcUrl, httpClient);
+    //initializeNotifications();
 
     getBalance(mySepAddress);
   }
@@ -97,15 +93,29 @@ class _WalletPageState extends State<WalletPage> {
     // TODO: implement dispose
     super.dispose();
     amountController.dispose();
+    ethClient.dispose();
   }
-
 
   Future<DeployedContract> loadContract() async {
     String abi = await rootBundle.loadString("assets/abi_wallet_os.json");
-    final contract = DeployedContract(ContractAbi.fromJson(abi, "PKWallet"),
+    contract = DeployedContract(ContractAbi.fromJson(abi, "PKWallet"),
         EthereumAddress.fromHex(sepContractAddress));
-
+    // PROCESS TO LISTENING TRANSFER EVENT
+    contractEvent = contract.event("transfer");
+    listenForTransfers();
     return contract;
+  }
+
+  Future<void> listenForTransfers() async {
+    await for (var event in ethClient.events(FilterOptions.events(
+        contract: contract,
+        event: contractEvent,
+        fromBlock: const BlockNum.current()))) {
+      // Trigger Notification here
+      MyNotification().showNotification(
+          title: "Transaction success",
+          body: "Transaction hash: ${event.transactionHash}");
+    }
   }
 
   Future<List<dynamic>> query(String function, List<dynamic> args) async {
@@ -119,10 +129,7 @@ class _WalletPageState extends State<WalletPage> {
 
   Future<void> getBalance(String targetAddress) async {
     EthereumAddress address = EthereumAddress.fromHex(targetAddress);
-    //List<dynamic> result = await query("getBalance", [address]);
     EtherAmount balance = await ethClient.getBalance(address);
-
-    //myData = result[0];
     myData = balance.getInWei;
     double curETH = pow(10, 18).toDouble();
     isEth ? lbData = ((myData).toDouble()) / curETH : lbData = (myData);
@@ -139,30 +146,31 @@ class _WalletPageState extends State<WalletPage> {
 
   void sendTransaction(String receiver, BigInt txValue) async {
     EthPrivateKey credentials = EthPrivateKey.fromHex(sepPrivateKey);
-    EtherAmount gasPrice = await ethClient.getGasPrice();
+    DeployedContract contract = await loadContract();
     BigInt chainId = await ethClient.getChainId();
     int intChainId = chainId.toInt();
     setState(() {
       isLoading = true;
     });
-
+    final ethFunction = contract.function("sendViaTransfer");
     final response = await ethClient.sendTransaction(
       credentials,
-      Transaction(
-        to: EthereumAddress.fromHex(receiver),
-        gasPrice: gasPrice,
-        maxGas: 3000000,
+      Transaction.callContract(
+        contract: contract,
+        function: ethFunction,
+        parameters: [EthereumAddress.fromHex(receiver)],
         value: EtherAmount.inWei(txValue),
       ),
       chainId: intChainId,
     );
-    
+
     await _waitForConfirmation(response);
 
     setState(() {
       isLoading = false;
     });
     showAlertDialog();
+    return;
   }
 
   void showAlertDialog() {
@@ -186,17 +194,17 @@ class _WalletPageState extends State<WalletPage> {
     );
   }
 
-  Future<void> _waitForConfirmation(String? transactionHash) async {
+  Future<void> _waitForConfirmation(String transactionHash) async {
     const pollingInterval =
-        Duration(seconds: 5); // Adjust polling interval as needed
-    const maxAttempts = 4; // 12 * 5 seconds = 1 minute total wait time
+        Duration(seconds: 12); // Adjust polling interval as needed
+    const maxAttempts = 10; // 5 * 2 total wait time
 
     int attempt = 0;
 
     while (!transactionConfirmed && attempt < maxAttempts) {
       try {
         TransactionReceipt? receipt =
-            await ethClient.getTransactionReceipt(transactionHash!);
+            await ethClient.getTransactionReceipt(transactionHash);
         if (receipt != null && receipt.blockNumber != null) {
           // Transaction is confirmed
           transactionConfirmed = true;
@@ -213,9 +221,7 @@ class _WalletPageState extends State<WalletPage> {
     }
 
     if (!transactionConfirmed) {
-      transactionConfirmed = true;
-      error =
-          'Transaction not confirmed within timeout period.\nYou can close this notification and wait';
+      error = 'Transaction not confirmed within timeout period.';
     }
   }
 

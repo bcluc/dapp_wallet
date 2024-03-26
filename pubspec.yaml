@@ -38,6 +38,8 @@ dependencies:
   web3dart: ^2.7.3
   http: ^1.2.0
   web_socket_channel: ^2.4.0
+  flutter_local_notifications: ^17.0.0
+  webview_flutter: ^4.7.0
 
 dev_dependencies:
   flutter_test:
