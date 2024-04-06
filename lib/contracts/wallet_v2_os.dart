@@ -1,12 +1,12 @@
-import 'dart:io';
-import 'dart:convert';
 import 'dart:math';
+import 'package:dapp_tutorial/providers/wallet_provider.dart';
+import 'package:dapp_tutorial/screens/create_import_screen.dart';
 import 'package:dapp_tutorial/utils/notification.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart';
-import 'package:web3dart/crypto.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web3dart/web3dart.dart';
 
 class WalletOSV2 extends StatelessWidget {
@@ -52,26 +52,26 @@ class _WalletPageState extends State<WalletPage> {
   bool isEth = false;
   bool transactionConfirmed = false;
 
-  // Wallet private key
-  final String sepPrivateKey =
-      "4177462845449c2549df12b12c2c933959ad52b4cb36305974a8cfa7170fcd35";
-  // contract in remix
-  final String sepContractAddress =
-      "0xa229d8Ce648cCE125158D8075C993bbb21a352b6";
-
-  // my IP_V4: 10.0.21.165
-  final String _sepRpcUrl =
-      'https://sepolia.infura.io/v3/2682fb5ba7214f63ad1b4b90c9169b38';
-
   late BigInt myData;
   late String error;
   var lbData;
   late DeployedContract contract;
   late ContractEvent contractEvent;
 
-  //your wallet url
-  final mySepAddress = "0x55128a9000E226c90Da21cb864d985Ad3ef7E9C5";
+  String myWalletAddress = '';
+  String myPrivateKey = '';
 
+  // // Wallet private key
+  // final String sepPrivateKey =
+  //     "4177462845449c2549df12b12c2c933959ad52b4cb36305974a8cfa7170fcd35";
+  // // contract in remix
+  final String sepContractAddress =
+      "0x39f13B61cEF5939A30D1ac89E1bF441a62371E7C";
+  final String _sepRpcUrl =
+      'https://sepolia.infura.io/v3/2682fb5ba7214f63ad1b4b90c9169b38';
+
+  // //your wallet url
+  // final mySepAddress = "0x55128a9000E226c90Da21cb864d985Ad3ef7E9C5";
   // the account you send to
   final toSepAddress = "0x87adf62727625c29D6A2F478df145c975896498f";
 
@@ -84,8 +84,25 @@ class _WalletPageState extends State<WalletPage> {
     //   return IOWebSocketChannel.connect(_wsUrl).cast<String>();
     ethClient = Web3Client(_sepRpcUrl, httpClient);
     //initializeNotifications();
+    loadWallet();
+    getBalance(myWalletAddress);
+  }
 
-    getBalance(mySepAddress);
+  Future<void> loadWallet() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? privateKey = prefs.getString('privateKey');
+    if (privateKey != null) {
+      final walletProvider = WalletProvider();
+      await walletProvider.loadPrivateKey();
+      EthereumAddress address = await walletProvider.getPublicKey(privateKey);
+      print('My wallet address');
+      print(address.hex);
+      setState(() {
+        myWalletAddress = address.hex;
+        myPrivateKey = privateKey;
+      });
+      print(myPrivateKey);
+    }
   }
 
   @override
@@ -138,14 +155,14 @@ class _WalletPageState extends State<WalletPage> {
   }
 
   void restartMoney() {
-    getBalance(mySepAddress);
+    getBalance(myWalletAddress);
     setState(() {
       amountController.clear();
     });
   }
 
   void sendTransaction(String receiver, BigInt txValue) async {
-    EthPrivateKey credentials = EthPrivateKey.fromHex(sepPrivateKey);
+    EthPrivateKey credentials = EthPrivateKey.fromHex(myPrivateKey);
     DeployedContract contract = await loadContract();
     BigInt chainId = await ethClient.getChainId();
     int intChainId = chainId.toInt();
@@ -318,10 +335,29 @@ class _WalletPageState extends State<WalletPage> {
                         ],
                       ),
                     ),
-                  )
+                  ),
+                  TextButton(
+                      onPressed: logOut,
+                      child: const Text(
+                        "Log out",
+                        textAlign: TextAlign.center,
+                      )),
                 ],
               ),
       ),
+    );
+  }
+
+  Future<void> logOut() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.remove('privateKey');
+    // ignore: use_build_context_synchronously
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const CreateOrImportPage(),
+      ),
+      (route) => false,
     );
   }
 }
