@@ -10,10 +10,9 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final walletProvider = Provider.of<WalletProvider>(context);
-    if(walletProvider.privateKey == null){
-      return const CreateOrImportPage();
-    }
-    else{
+    if (walletProvider.privateKey == null) {
+      return CreateOrImportPage();
+    } else {
       return const WalletOSV2();
     }
   }

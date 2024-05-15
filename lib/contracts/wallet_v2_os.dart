@@ -355,7 +355,7 @@ class _WalletPageState extends State<WalletPage> {
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(
-        builder: (context) => const CreateOrImportPage(),
+        builder: (context) => CreateOrImportPage(),
       ),
       (route) => false,
     );
