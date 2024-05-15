@@ -26,8 +26,10 @@ class CreateOrImportPage extends StatelessWidget {
 
   void myLaunchURL(String url) async {
     final Uri _url = Uri.parse(url);
-    if (!await launchUrl(_url)) {
-      throw Exception('Could not launch $url');
+    if (await canLaunchUrl(_url)) {
+      await launchUrl(_url);
+    } else {
+      throw 'Could not launch $url';
     }
   }
 
