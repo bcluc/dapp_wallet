@@ -6,7 +6,6 @@
 // các thông tin đổi để hiện trên Hóa đơn thanh toán: orderInfo, ,amount, orderID,...
 // Đổi redirectURL, ipnURL theo trang web của mình
 
-//
 require("dotenv").config();
 
 function payMomo(amount) {
@@ -91,7 +90,6 @@ function payMomo(amount) {
       "Content-Length": Buffer.byteLength(requestBody),
     },
   };
-
   // hàm nhận response
   callback = function (res) {
     console.log(`Status: ${res.statusCode}`);
@@ -107,7 +105,7 @@ function payMomo(amount) {
     res.on("end", () => {
       console.log("No more data in response.");
       console.log(resultUrl);
-      return resultUrl;
+      //return resultUrl;
     });
   };
 
@@ -115,14 +113,99 @@ function payMomo(amount) {
   const req = https.request(options, callback);
 
   req.on("error", (e) => {
-    console.log(`problem with request: ${e.message}`);
+    console.log("Error....");
   });
 
   //gửi yêu cầu tới momo, nhận lại kết quả trả về
   // Link chuyển hướng tới momo là payUrl, trong phần body của data trả về
 
   // write data to request body
+  //console.log("Sending....");
+  req.write(requestBody);
+  req.end();
+}
+
+// partnerCode	String		Integration information
+// requestId	String		Unique ID of each request
+// orderId	String		ID of order that needs to be checked.
+// lang	String		Language of returned message (vi or en)
+// signature	String		Signature to check information. Use Hmac_SHA256 algorithm with data in format:
+// accessKey=$accessKey&orderId=$orderId&partnerCode=$partnerCode
+// &requestId=$requestId
+
+function checkStatus(orderId) {
+  var accessKey = process.env.MOMO_ACCESS_KEY;
+  var requestId = orderId;
+  var partnerCode = "MOMO";
+  var lang = "vi"; // ngôn ngữ
+  var rawSignature =
+    "accessKey=" +
+    accessKey +
+    "&orderId=" +
+    orderId +
+    "&partnerCode=" +
+    partnerCode +
+    "&requestId=" +
+    requestId;
+
+  const crypto = require("crypto");
+  var signature = crypto
+    .createHmac("sha256", secretKey)
+    .update(rawSignature)
+    .digest("hex");
+
+  console.log("--------------------SIGNATURE----------------");
+  console.log(signature);
+
+  // data gửi đi dưới dạng JSON, gửi tới MoMoEndpoint
+  const requestBody = JSON.stringify({
+    partnerCode: partnerCode,
+    requestId: requestId,
+    orderId: orderId,
+    lang: lang,
+    signature: signature,
+  });
+
+  const https = require("https");
+  const options = {
+    hostname: process.env.MOMO_HOSTNAME,
+    port: 443,
+    path: "/v2/gateway/api/query",
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Content-Length": Buffer.byteLength(requestBody),
+    },
+  };
+
+  // hàm nhận response
+  callback = function (res) {
+    res.setEncoding("utf8");
+    res.on("data", (body) => {
+      console.log("Body: ");
+      console.log(body);
+      resultUrl = JSON.parse(body).payUrl;
+      console.log("resultCode: ");
+      console.log(JSON.parse(body).resultCode);
+    });
+    res.on("end", () => {
+      console.log("No more data in response.");
+      console.log(resultUrl);
+      //return resultUrl;
+    });
+  };
+
+  // Gửi request
+  const req = https.request(options, callback);
+
+  req.on("error", (e) => {
+    console.log("Error....");
+  });
+
+  // write data to request body
   console.log("Sending....");
   req.write(requestBody);
   req.end();
 }
+
+payMomo(4500);
