@@ -12,7 +12,7 @@ class MomoRequest extends StatelessWidget {
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-          title: Text('Run JavaScript Function'),
+          title: const Text('Run JavaScript Function'),
         ),
         body: PayMomoExample(),
       ),
@@ -30,7 +30,7 @@ class _PayMomoExampleState extends State<PayMomoExample> {
 
   void _payMomo() async {
     final response = await http.post(
-      Uri.parse('https://momo-backend-1r3y.onrender.com/pay'),
+      Uri.parse('https://momo-backend-1r3y.onrender.com/api/pay'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },

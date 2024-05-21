@@ -289,27 +289,27 @@ class CreateOrImportPage extends StatelessWidget {
             ElevatedButton(
               onPressed: () async {
                 // Add your payment logic here
-                try {
-                  final resultLink = await payMomo(4500);
-                  //final resultLink = js.context.callMethod('payMomo', [4500]);
-                  // Check link
-                  MyNotification()
-                      .showNotification(title: "Momo status", body: resultLink);
-                  print('---------');
-                  print(resultLink);
-                  myLaunchURL(resultLink);
-                } on PlatformException catch (e) {
-                  log('error:${e.details}');
-                }
+                // try {
+                //   final resultLink = await payMomo(4500);
+                //   //final resultLink = js.context.callMethod('payMomo', [4500]);
+                //   // Check link
+                //   MyNotification()
+                //       .showNotification(title: "Momo status", body: resultLink);
+                //   print('---------');
+                //   print(resultLink);
+                //   myLaunchURL(resultLink);
+                // } on PlatformException catch (e) {
+                //   log('error:${e.details}');
+                // }
 
                 // Create Js Service
                 //runJavaScriptFunction(35600);
 
                 // use nodejs server
-                // Navigator.push(
-                //   context,
-                //   MaterialPageRoute(builder: (context) => const MomoRequest()),
-                // );
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const MomoRequest()),
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
