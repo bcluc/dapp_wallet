@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:dapp_tutorial/momo/momo_request.dart';
+import 'package:dapp_tutorial/screens/billing/subcription/subcription.dart';
 import 'package:dapp_tutorial/screens/billing/subcription/subcription_card.dart';
 import 'package:dapp_tutorial/screens/memonic/generate_mnemonic_screen.dart';
 import 'package:dapp_tutorial/screens/import_wallet.dart';
@@ -319,6 +320,32 @@ class CreateOrImportPage extends StatelessWidget {
               ),
               child: const Text(
                 'Momo',
+                style: TextStyle(
+                  fontSize: 18.0,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16.0),
+
+            // Register button
+            ElevatedButton(
+              onPressed: () {
+                // Add your register logic here
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SubcriptionScreen(),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    Colors.white, // Customize button background color
+                foregroundColor: Colors.black, // Customize button text color
+                padding: const EdgeInsets.all(16.0),
+              ),
+              child: const Text(
+                'Subcription',
                 style: TextStyle(
                   fontSize: 18.0,
                 ),

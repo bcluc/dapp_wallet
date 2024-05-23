@@ -4,9 +4,10 @@ import 'package:flutter_svg/svg.dart';
 
 class SubcriptionScreen extends StatelessWidget {
   const SubcriptionScreen({super.key});
-
   @override
   Widget build(BuildContext context) {
+    String planName = "Quater";
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -32,12 +33,12 @@ class SubcriptionScreen extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const SizedBox(height: 20),
+                const SizedBox(height: 10),
                 const Text('Be part of our',
                     style: TextStyle(
                       fontSize: 40,
@@ -55,22 +56,26 @@ class SubcriptionScreen extends StatelessWidget {
                 const SizedBox(
                   height: 10,
                 ),
-                const Text(
-                    "Easy and fast process, provide multiple  billing options just for you",
-                    textAlign: TextAlign.center),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12),
+                  child: Text(
+                      "Easy and fast process, provide multiple billing options just for you",
+                      textAlign: TextAlign.center),
+                ),
                 const SizedBox(
                   height: 10,
                 ),
                 Expanded(
                   child: SubscriptionCard(
-                      planName: "Quater",
-                      price: "\$9,99",
-                      time: "3 months",
-                      description:
-                          "Full access to all our library in Funny Filter",
-                      onSubscribe: () {}),
+                    planName: planName,
+                    price: 20.0,
+                    duration: 3,
+                    timeUnit: "month",
+                    description:
+                        "Full access to all our library in Funny Filter",
+                  ),
                 ),
-                const SizedBox(height: 70),
+                const SizedBox(height: 50),
               ],
             ),
           ),
